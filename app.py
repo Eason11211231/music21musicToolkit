@@ -21,11 +21,11 @@ def handleMusicTask():
         return jsonify(result)
 
     elif task == "generateMelody":
-        musicxml = generate_melody(style, key, time_sig, measures)
-        return jsonify({
-            "result": "Melody generated successfully",
-            "musicXML": musicxml
-        })
+musicxml_path = generate_melody(style, key, time_sig, measures)
+return jsonify({
+    "result": "Melody generated successfully",
+    "musicXML": str(musicxml_path)
+})
 
     return jsonify({"error": "Invalid task"}), 400
 
