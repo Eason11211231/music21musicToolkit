@@ -32,3 +32,8 @@ def handleMusicTask():
 @app.route("/")
 def home():
     return jsonify({"message": "Music Toolkit API is running."})
+import os
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
