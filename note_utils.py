@@ -59,73 +59,28 @@ def create_phrase(length=16, move_style="step"):
     return phrase
 from music21 import meter
 
-def create_measured_phrase(length=8, time_signature="4/4", move_style="step"):
-    """
-    建立一段按拍號切好小節的旋律片段（含附點與16分音符）
-    """
+def create_measured_phrase(length=4, time_signature="4/4"):
     ts = meter.TimeSignature(time_signature)
-    all_pitches = get_full_piano_pitch_list()
     part = stream.Part()
-    current_pitch = random.choice(all_pitches)
 
-    for _ in range(length):  # 每一個小節
-        m = stream.Measure()
+    for i in range(length):
+        m = stream.Measure(number=i+1)
         m.timeSignature = ts
         total_beat = 0.0
 
-        # ✅ 加上這段：合法節奏選項，含 16 分音符
-        candidate_durations = [
-            ('16th', 0, 0.25),
-            ('eighth', 0, 0.5),
-            ('eighth', 1, 0.75),
-            ('quarter', 0, 1.0),
-            ('quarter', 1, 1.5),
-            ('half', 0, 2.0),
-            ('half', 1, 3.0)
-        ]
-
-while total_beat < ts.barDuration.quarterLength:
+        while total_beat < ts.barDuration.quarterLength:
             remaining = ts.barDuration.quarterLength - total_beat
-            remaining = round(remaining, 5)  # 🔍 解決浮點誤差
-
-            # 容錯處理：放寬節奏篩選條件
-            tolerance = 0.0001
-            valid = [d for d in candidate_durations if d[2] <= remaining + tolerance]
-
-            if not valid:
-                # 用 Rest 補滿
-                if remaining > 0:
-                    r = note.Rest()
-                    r.duration = duration.Duration(remaining)
-                    r.addLyric(f"REST: {remaining}")
-                    m.append(r)
-                    total_beat += remaining
-                    total_beat = round(total_beat, 5)
-                break
-
-            dur_type, dots, ql = random.choice(valid)
-            d = duration.Duration(dur_type)
-            d.dots = dots
-
-            # 決定音高
-            if move_style == "step":
-                steps = random.choice([-2, -1, 0, 1, 2])
+            if remaining >= 1.0:
+                dur = duration.Duration(1.0)
             else:
-                steps = random.choice([-12, -7, -5, 5, 7, 12])
+                dur = duration.Duration(remaining)
 
-            next_midi = max(21, min(108, current_pitch.midi + steps))
-            current_pitch = pitch.Pitch()
-            current_pitch.midi = next_midi
-
-            # 建立 Note，加入資訊型歌詞
-            n = note.Note()
-            n.pitch = current_pitch
-            n.duration = d
-            n.addLyric(n.nameWithOctave)
-            n.addLyric(f"QL: {n.quarterLength}")
-
+            n = note.Note(random.choice(['C4', 'D4', 'E4', 'F4', 'G4']))
+            n.duration = dur
+            n.addLyric(f"M: {i+1}")
             m.append(n)
-            total_beat += d.quarterLength
+
+            total_beat += dur.quarterLength
             total_beat = round(total_beat, 5)
 
         part.append(m)
