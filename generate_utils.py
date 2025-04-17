@@ -22,18 +22,21 @@ def generate_melody(style, key_str, time_signature, measures=8):
     except:
         ts = meter.TimeSignature("4/4")
 
-    # 建立旋律與低音聲部
-    melody = stream.Part()
-    melody.id = "Melody"
-    melody.partName = "旋律"
-    melody.append(k)
-    melody.append(ts)
+from music21 import instrument
 
-    bass = stream.Part()
-    bass.id = "Bass"
-    bass.partName = "低音"
-    bass.append(k)
-    bass.append(ts)
+melody = stream.Part()
+melody.id = "Melody"
+melody.partName = "旋律"
+melody.append(instrument.Violin())  # ✅ 指定旋律為小提琴
+melody.append(k)
+melody.append(ts)
+
+bass = stream.Part()
+bass.id = "Bass"
+bass.partName = "低音"
+bass.append(instrument.Cello())  # ✅ 指定低音為大提琴
+bass.append(k)
+bass.append(ts)
 
     scale_pitches = k.getPitches()
 
