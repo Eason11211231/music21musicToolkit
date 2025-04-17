@@ -57,3 +57,58 @@ def create_phrase(length=16, move_style="step"):
         phrase.append(n)
 
     return phrase
+from music21 import meter
+
+def create_measured_phrase(length=8, time_signature="4/4", move_style="step"):
+    """
+    建立一段按拍號切好小節的旋律片段
+    """
+    ts = meter.TimeSignature(time_signature)
+    all_pitches = get_full_piano_pitch_list()
+    part = stream.Part()
+    current_pitch = random.choice(all_pitches)
+
+    for _ in range(length):  # 每一個小節
+        m = stream.Measure()
+        m.timeSignature = ts
+        total_beat = 0.0
+
+        while total_beat < ts.barDuration.quarterLength:
+            # 音高移動方式
+            if move_style == "step":
+                steps = random.choice([-2, -1, 0, 1, 2])
+            else:
+                steps = random.choice([-12, -7, -5, 5, 7, 12])
+            next_midi = max(21, min(108, current_pitch.midi + steps))
+            current_pitch = pitch.Pitch()
+            current_pitch.midi = next_midi
+
+            # 產生合法的時值
+            remaining = ts.barDuration.quarterLength - total_beat
+            candidate_durations = [
+                ('eighth', 0, 0.5),
+                ('eighth', 1, 0.75),
+                ('quarter', 0, 1.0),
+                ('quarter', 1, 1.5),
+                ('half', 0, 2.0),
+                ('half', 1, 3.0)
+            ]
+            # 選出不會爆拍的時值
+            valid = [d for d in candidate_durations if d[2] <= remaining]
+            if not valid:
+                break  # 沒有可用節奏就跳出
+
+            dur_type, dots, ql = random.choice(valid)
+            d = duration.Duration(dur_type)
+            d.dots = dots
+
+            n = note.Note()
+            n.pitch = current_pitch
+            n.duration = d
+
+            m.append(n)
+            total_beat += d.quarterLength
+
+        part.append(m)
+
+    return part
