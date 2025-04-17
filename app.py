@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from music_utils import analyze_musicxml
 from melody_generator import generate_melody
+pitch_pool = data.get("pitchPool")  # 新增這行
 
 app = Flask(__name__)
 CORS(app)
@@ -9,6 +10,7 @@ CORS(app)
 @app.route("/musicToolkit", methods=["POST"])
 def handleMusicTask():
     data = request.get_json()
+    pitch_pool = data.get("pitchPool")
     task = data.get("task")
     style = data.get("style")
     key = data.get("key")
@@ -21,7 +23,7 @@ def handleMusicTask():
         return jsonify(result)
 
     elif task == "generateMelody":
-        musicxml_path = generate_melody(style, key, time_sig, measures)
+        musicxml_path = generate_melody(style, key, time_sig, measures, pitch_pool)
         return jsonify({
             "result": "Melody generated successfully",
             "musicXML": str(musicxml_path)
