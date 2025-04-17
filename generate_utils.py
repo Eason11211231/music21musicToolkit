@@ -22,37 +22,42 @@ def generate_melody(style, key_str, time_signature, measures=8):
         ts = meter.TimeSignature("4/4")
 
     melody = stream.Part()
-    melody.id = "melody"
-    melody.append(k)
-    melody.append(ts)
+melody.id = "Melody"
+melody.partName = "旋律"
 
-    bass = stream.Part()
-    bass.id = "bass"
-    bass.append(k)
-    bass.append(ts)
+bass = stream.Part()
+bass.id = "Bass"
+bass.partName = "低音"
 
-    scale_pitches = k.getPitches()
+melody.append(k)
+melody.append(ts)
+bass.append(k)
+bass.append(ts)
 
-    for _ in range(measures):
-        m1 = stream.Measure()
-        m2 = stream.Measure()
+for _ in range(measures):
+    m1 = stream.Measure()
+    m2 = stream.Measure()
 
-        for _ in range(4):  # 每拍
-            pitch_m = random.choice(scale_pitches)
-            n1 = note.Note(pitch_m)
-            n1.quarterLength = 1.0
-            m1.append(n1)
+    for _ in range(4):
+        # Melody
+        pitch_m = random.choice(scale_pitches)
+        n1 = note.Note(pitch_m)
+        n1.quarterLength = 1.0
+        m1.append(n1)
 
-            pitch_b = random.choice(scale_pitches).transpose(-12)
-            n2 = note.Note(pitch_b)
-            n2.quarterLength = 1.0
-            m2.append(n2)
+        # Bass
+        pitch_b = random.choice(scale_pitches).transpose(-12)
+        n2 = note.Note(pitch_b)
+        n2.quarterLength = 1.0
+        m2.append(n2)
 
-        melody.append(m1)
-        bass.append(m2)
+    melody.append(m1)
+    bass.append(m2)
 
-    score.append(melody)
-    score.append(bass)
+# 💡 這裡關鍵：先加入 bass，再加入 melody，就能控制順序
+score.insert(0, bass)
+score.insert(0, melody)
+
 
     filename = f"melody_{uuid.uuid4().hex}.musicxml"
     score.write('musicxml', fp=filename)
