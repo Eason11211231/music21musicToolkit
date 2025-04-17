@@ -1,49 +1,77 @@
-from music21 import converter, analysis, key
-import re
+from music21 import stream, note, meter, key as m21key
+import random
+import dropbox
+import os
+import uuid
 
-def analyze_musicxml(musicxml_string):
+# 請貼上你自己的 Dropbox token 👇
+DROPBOX_ACCESS_TOKEN = "sl.xxxxx.你的_token"
+dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
+
+def generate_melody(style, key_str, time_signature, measures=8):
+    score = stream.Score()
+
+    # 嘗試解析調性與拍號
     try:
-        score = converter.parse(musicxml_string)
-        k = score.analyze("key")
-        result = {
-            "detectedKey": str(k),
-            "isMinor": k.mode == "minor",
-            "modulations": [],
-            "cadences": [],
-            "tritoneSubstitutions": []
-        }
+        k = m21key.Key(key_str)
+    except:
+        k = m21key.Key("C")
 
-        # 每小節調性
-        measure_keys = []
-        for m in score.parts[0].getElementsByClass('Measure'):
-            this_key = m.analyze("key")
-            measure_keys.append(str(this_key))
+    try:
+        ts = meter.TimeSignature(time_signature)
+    except:
+        ts = meter.TimeSignature("4/4")
 
-        # 偵測轉調
-        unique_keys = list(set(measure_keys))
-        if len(unique_keys) > 1:
-            result["modulations"] = unique_keys
+    # 建立旋律與低音聲部
+    melody = stream.Part()
+    melody.id = "Melody"
+    melody.partName = "旋律"
+    melody.append(k)
+    melody.append(ts)
 
-        # 終止式偵測
-        chords = score.chordify()
-        roman = analysis.romanNumeral.romanNumeralFromChord
-        prev_rn = None
-        for c in chords.recurse().getElementsByClass('Chord'):
-            try:
-                rn = roman(c, k)
-                if prev_rn == "V" and rn.figure == "I":
-                    result["cadences"].append("Authentic cadence found")
-                prev_rn = rn.figure
-            except:
-                continue
+    bass = stream.Part()
+    bass.id = "Bass"
+    bass.partName = "低音"
+    bass.append(k)
+    bass.append(ts)
 
-        # Tritone substitution（簡單偵測）
-        tritone_regex = re.compile(r'(bII7|bVI7|bIII7)')
-        for chord_string in measure_keys:
-            if tritone_regex.search(chord_string):
-                result["tritoneSubstitutions"].append(chord_string)
+    scale_pitches = k.getPitches()
 
-        return result
+    for _ in range(measures):
+        m1 = stream.Measure()
+        m2 = stream.Measure()
 
-    except Exception as e:
-        return {"error": str(e)}
+        for i in range(4):  # 每拍 1 音
+            offset = i * 1.0
+
+            # Melody
+            pitch_m = random.choice(scale_pitches)
+            n1 = note.Note(pitch_m)
+            n1.quarterLength = 1.0
+            m1.insert(offset, n1)
+
+            # Bass
+            pitch_b = random.choice(scale_pitches).transpose(-12)
+            n2 = note.Note(pitch_b)
+            n2.quarterLength = 1.0
+            m2.insert(offset, n2)
+
+        melody.append(m1)
+        bass.append(m2)
+
+    # 插入兩個聲部（先低音，再旋律）
+    score.insert(0, bass)
+    score.insert(0, melody)
+
+    # 產生 MusicXML 檔案並上傳 Dropbox
+    filename = f"melody_{uuid.uuid4().hex}.musicxml"
+    score.write('musicxml', fp=filename)
+
+    with open(filename, "rb") as f:
+        dbx.files_upload(f.read(), f"/{filename}", mode=dropbox.files.WriteMode.overwrite)
+
+    shared_link_metadata = dbx.sharing_create_shared_link_with_settings(f"/{filename}")
+    public_url = shared_link_metadata.url.replace("?dl=0", "?dl=1")
+
+    os.remove(filename)
+    return public_url
