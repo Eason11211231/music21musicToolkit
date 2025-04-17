@@ -58,7 +58,6 @@ for _ in range(measures):
 score.insert(0, bass)
 score.insert(0, melody)
 
-
     filename = f"melody_{uuid.uuid4().hex}.musicxml"
     score.write('musicxml', fp=filename)
 
