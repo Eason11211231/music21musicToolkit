@@ -15,27 +15,50 @@ def handleMusicTask():
     time_sig = data.get("timeSignature")
     melody = data.get("melody")
     measures = data.get("measures", 8)
-    pitch_pool = data.get("pitchPool")  # ✅ 正確放在這裡
+    pitch_pool = data.get("pitchPool")
 
     if task == "analyzeMusic":
-        result = analyze_musicxml(melody)
-        return jsonify(result)
+        try:
+            result = analyze_musicxml(melody)
+            return jsonify({
+                "status": "success",
+                "message": "分析成功",
+                "analysisResult": result
+            })
+        except Exception as e:
+            return jsonify({
+                "status": "error",
+                "message": f"音樂分析失敗：{str(e)}"
+            }), 500
 
     elif task == "generateMelody":
-        musicxml_path = generate_melody(style, key, time_sig, measures, pitch_pool)
-        return jsonify({
-            "result": "Melody generated successfully",
-            "musicXML": str(musicxml_path)
-        })
+        try:
+            musicxml_result = generate_melody(style, key, time_sig, measures, pitch_pool)
+
+            if isinstance(musicxml_result, dict) and "error" in musicxml_result:
+                return jsonify({
+                    "status": "error",
+                    "message": musicxml_result["error"]
+                }), 400
+
+            return jsonify({
+                "status": "success",
+                "message": "旋律生成成功",
+                "keyUsed": key,
+                "musicXMLUrl": str(musicxml_result)
+            })
+        except Exception as e:
+            return jsonify({
+                "status": "error",
+                "message": f"伺服器錯誤：{str(e)}"
+            }), 500
 
     else:
-        return jsonify({"error": "Invalid task"}), 400
+        return jsonify({
+            "status": "error",
+            "message": "無效的任務參數（task）"
+        }), 400
 
 @app.route("/")
 def home():
     return jsonify({"message": "Music Toolkit API is running."})
-import os
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
