@@ -30,7 +30,7 @@ def generate_melody(style, key_str, time_signature, measures=8):
     bass = stream.Part()
     bass.id = "Bass"
     bass.partName = "低音"
-    bass.append(instrument.Cello())
+    bass.append(instrument.Violoncello())
     bass.append(k)
     bass.append(ts)
 
