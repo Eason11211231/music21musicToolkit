@@ -4,24 +4,27 @@ import os
 import uuid
 import random
 
-DROPBOX_ACCESS_TOKEN = "sl.xxxxx.你的_token"  # ⛳ 替換為你的真實 token
+DROPBOX_ACCESS_TOKEN = "sl.xxxxx.你的_token"  # TODO: 請換成你自己的 Dropbox token
 dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
 
 def generate_melody(style, key_str, time_signature, measures=8, pitch_pool=None):
     score = stream.Score()
 
-try:
-    cleaned_key_str = key_str.strip().title() if key_str else "C"
-    k = m21key.Key(cleaned_key_str)
-except Exception as e:
-    print(f"[Warning] key_str 無法解析 '{key_str}', fallback to C: {e}")
-    k = m21key.Key("C")
+    # Key 處理
+    try:
+        cleaned_key_str = key_str.strip().title() if key_str else "C"
+        k = m21key.Key(cleaned_key_str)
+    except Exception as e:
+        print(f"[Warning] key_str 無法解析 '{key_str}', fallback to C: {e}")
+        k = m21key.Key("C")
 
+    # Time signature 處理
     try:
         ts = meter.TimeSignature(time_signature)
     except:
         ts = meter.TimeSignature("4/4")
 
+    # 建立旋律與低音部
     melody = stream.Part()
     melody.id = "Melody"
     melody.partName = "旋律"
@@ -36,17 +39,24 @@ except Exception as e:
     bass.append(k)
     bass.append(ts)
 
-    # 使用傳入的 pitch pool 或 fallback 到 key 音階
+    # 處理 pitch_pool
     if pitch_pool and isinstance(pitch_pool, list):
-        scale_pitches = pitch_pool
+        cleaned_pitch_pool = []
+        for p in pitch_pool:
+            try:
+                n = note.Note(p)
+                cleaned_pitch_pool.append(n.nameWithOctave)
+            except Exception as e:
+                print(f"[Warning] 跳過不合法音符 '{p}': {e}")
+        scale_pitches = cleaned_pitch_pool if cleaned_pitch_pool else [str(p.nameWithOctave) for p in k.getPitches("C3", "C6")]
     else:
         scale_pitches = [str(p.nameWithOctave) for p in k.getPitches("C3", "C6")]
 
     for _ in range(measures):
         m1 = stream.Measure()
         m2 = stream.Measure()
-
         offset = 0.0
+
         motif = random.choice([
             [1.0, 1.0, 1.0, 1.0],
             [0.5, 0.5, 1.0, 2.0],
@@ -57,20 +67,17 @@ except Exception as e:
             pitch_str = random.choice(scale_pitches)
             try:
                 n1 = note.Note(pitch_str)
-            except:
-                continue
+                n1.quarterLength = dur
+                m1.insert(offset, n1)
 
-            n1.quarterLength = dur
-            m1.insert(offset, n1)
-
-            try:
                 n2 = note.Note(pitch_str).transpose(-12)
                 n2.quarterLength = dur
                 m2.insert(offset, n2)
-            except:
-                continue
 
-            offset += dur
+                offset += dur
+            except Exception as e:
+                print(f"[Warning] 音符生成錯誤：{e}")
+                continue
 
         melody.append(m1)
         bass.append(m2)
@@ -88,5 +95,4 @@ except Exception as e:
     public_url = shared_link_metadata.url.replace("?dl=0", "?dl=1")
 
     os.remove(filename)
-    return public_url
-
+    return public_url  # ✅ 確保在函式內，縮排對齊
