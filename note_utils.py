@@ -96,7 +96,11 @@ def create_measured_phrase(length=8, time_signature="4/4", move_style="step"):
             # 選出不會爆拍的時值
             valid = [d for d in candidate_durations if d[2] <= remaining]
             if not valid:
-                break  # 沒有可用節奏就跳出
+            # 沒有可用音符，補一個 Rest 填滿剩餘時值
+            r = note.Rest()
+            r.duration = duration.Duration(remaining)
+            m.append(r)
+            break
 
             dur_type, dots, ql = random.choice(valid)
             d = duration.Duration(dur_type)
