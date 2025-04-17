@@ -28,7 +28,7 @@ def generate_melody(style, key_str, time_signature, measures=8):
     # 產生旋律 & 低音音符
     scale_pitches = k.getPitches()
 
-    for _ in range(measures):
+for _ in range(measures):
     m1 = stream.Measure()
     m2 = stream.Measure()
 
