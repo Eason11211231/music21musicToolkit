@@ -105,6 +105,8 @@ def create_measured_phrase(length=8, time_signature="4/4", move_style="step"):
             n = note.Note()
             n.pitch = current_pitch
             n.duration = d
+            n.addLyric(n.nameWithOctave)
+            n.addLyric(f"QL: {n.quarterLength}")
 
             m.append(n)
             total_beat += d.quarterLength
