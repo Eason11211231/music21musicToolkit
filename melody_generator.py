@@ -10,10 +10,12 @@ dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
 def generate_melody(style, key_str, time_signature, measures=8, pitch_pool=None):
     score = stream.Score()
 
-    try:
-        k = m21key.Key(key_str)
-    except:
-        k = m21key.Key("C")
+try:
+    cleaned_key_str = key_str.strip().title() if key_str else "C"
+    k = m21key.Key(cleaned_key_str)
+except Exception as e:
+    print(f"[Warning] key_str 無法解析 '{key_str}', fallback to C: {e}")
+    k = m21key.Key("C")
 
     try:
         ts = meter.TimeSignature(time_signature)
