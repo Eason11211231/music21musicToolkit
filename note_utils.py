@@ -73,47 +73,32 @@ def create_measured_phrase(length=8, time_signature="4/4", move_style="step"):
         m.timeSignature = ts
         total_beat = 0.0
 
-        while total_beat < ts.barDuration.quarterLength:
-            # 音高移動方式
-            if move_style == "step":
-                steps = random.choice([-2, -1, 0, 1, 2])
-            else:
-                steps = random.choice([-12, -7, -5, 5, 7, 12])
-            next_midi = max(21, min(108, current_pitch.midi + steps))
-            current_pitch = pitch.Pitch()
-            current_pitch.midi = next_midi
+while total_beat < ts.barDuration.quarterLength:
+    remaining = ts.barDuration.quarterLength - total_beat
 
-            # 產生合法的時值
-            remaining = ts.barDuration.quarterLength - total_beat
-            candidate_durations = [
-                ('eighth', 0, 0.5),
-                ('eighth', 1, 0.75),
-                ('quarter', 0, 1.0),
-                ('quarter', 1, 1.5),
-                ('half', 0, 2.0),
-                ('half', 1, 3.0)
-            ]
-            # 選出不會爆拍的時值
-            valid = [d for d in candidate_durations if d[2] <= remaining]
-            if not valid:
-            # 沒有可用音符，補一個 Rest 填滿剩餘時值
-            r = note.Rest()
-            r.duration = duration.Duration(remaining)
-            m.append(r)
-            break
+    valid = [d for d in candidate_durations if d[2] <= remaining]
 
-            dur_type, dots, ql = random.choice(valid)
-            d = duration.Duration(dur_type)
-            d.dots = dots
+    if not valid:
+        # 補一個 Rest 填滿剩下拍數
+        r = note.Rest()
+        r.duration = duration.Duration(remaining)
+        r.addLyric(f"REST: {remaining}")  # 可選：給休止符加個註解
+        m.append(r)
+        total_beat += remaining
+        break
 
-            n = note.Note()
-            n.pitch = current_pitch
-            n.duration = d
-            n.addLyric(n.nameWithOctave)
-            n.addLyric(f"QL: {n.quarterLength}")
+    dur_type, dots, ql = random.choice(valid)
+    d = duration.Duration(dur_type)
+    d.dots = dots
 
-            m.append(n)
-            total_beat += d.quarterLength
+    n = note.Note()
+    n.pitch = current_pitch
+    n.duration = d
+    n.addLyric(n.nameWithOctave)
+    n.addLyric(f"QL: {n.quarterLength}")
+
+    m.append(n)
+    total_beat += d.quarterLength
 
         part.append(m)
 
