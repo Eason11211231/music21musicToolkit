@@ -4,10 +4,10 @@ import os
 import uuid
 import random
 
-DROPBOX_ACCESS_TOKEN = "sl.xxxxx.你的_token"  # TODO: 換掉你的 dropbox token
+DROPBOX_ACCESS_TOKEN = "sl.xxxxx.你的_token"
 dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
 
-# ✅ 中文調性轉換 + 自動大小寫處理
+# ✅ 中文調性轉換（升/降/大小調）+ 大小寫標準化
 def key_translate(input_str):
     if not input_str:
         return "C"
@@ -27,13 +27,14 @@ def key_translate(input_str):
 def generate_melody(style, key_str, time_signature, measures=8, pitch_pool=None):
     score = stream.Score()
 
-    # ✅ 用 key_translate 處理中文調性與大小寫
+    # ✅ 使用 key_translate + fallback
     translated_key_str = key_translate(key_str)
     try:
         k = m21key.Key(translated_key_str)
     except Exception as e:
         print(f"[ERROR] 無法解析 key：'{key_str}'（轉為：'{translated_key_str}'）錯誤：{e}")
-        return {"error": f"無法解析調性：{key_str}"}
+        print(f"[Fallback] 使用預設 C 大調")
+        k = m21key.Key("C")
 
     try:
         ts = meter.TimeSignature(time_signature)
@@ -54,7 +55,6 @@ def generate_melody(style, key_str, time_signature, measures=8, pitch_pool=None)
     bass.append(k)
     bass.append(ts)
 
-    # pitchPool 清理處理
     if pitch_pool and isinstance(pitch_pool, list):
         cleaned_pitch_pool = []
         for p in pitch_pool:
@@ -110,4 +110,4 @@ def generate_melody(style, key_str, time_signature, measures=8, pitch_pool=None)
     public_url = shared_link_metadata.url.replace("?dl=0", "?dl=1")
 
     os.remove(filename)
-    return public_url  # ✅ 這一行正確縮排在函式裡面！
+    return public_url
