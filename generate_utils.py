@@ -29,21 +29,25 @@ def generate_melody(style, key_str, time_signature, measures=8):
     scale_pitches = k.getPitches()
 
     for _ in range(measures):
-        m1 = stream.Measure()
-        m2 = stream.Measure()
+    m1 = stream.Measure()
+    m2 = stream.Measure()
 
-        # 上聲部（旋律）
-        n1 = note.Note(random.choice(scale_pitches))
+    for _ in range(4):  # 每拍都產生旋律與低音
+        # 旋律音
+        pitch_m = random.choice(scale_pitches)
+        n1 = note.Note(pitch_m)
         n1.quarterLength = 1.0
         m1.append(n1)
 
-        # 下聲部（低音）：向下八度
-        n2 = note.Note(random.choice(scale_pitches).transpose(-12))
+        # 低音音（下八度）
+        pitch_b = random.choice(scale_pitches).transpose(-12)
+        n2 = note.Note(pitch_b)
         n2.quarterLength = 1.0
         m2.append(n2)
 
-        melody.append(m1)
-        bass.append(m2)
+    melody.append(m1)
+    bass.append(m2)
+
 
     score.append(melody)
     score.append(bass)
