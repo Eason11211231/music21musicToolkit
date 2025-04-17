@@ -40,7 +40,7 @@ bass.append(ts)
 
 scale_pitches = k.getPitches()
 
-    for _ in range(measures):
+for _ in range(measures):
         m1 = stream.Measure()
         m2 = stream.Measure()
 
