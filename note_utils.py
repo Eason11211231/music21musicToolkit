@@ -84,24 +84,30 @@ def create_measured_phrase(length=8, time_signature="4/4", move_style="step"):
             ('half', 1, 3.0)
         ]
 
-        while total_beat < ts.barDuration.quarterLength:
+while total_beat < ts.barDuration.quarterLength:
             remaining = ts.barDuration.quarterLength - total_beat
-            valid = [d for d in candidate_durations if d[2] <= remaining]
+            remaining = round(remaining, 5)  # 🔍 解決浮點誤差
+
+            # 容錯處理：放寬節奏篩選條件
+            tolerance = 0.0001
+            valid = [d for d in candidate_durations if d[2] <= remaining + tolerance]
 
             if not valid:
-                # 補 Rest 填滿剩餘拍數
-                r = note.Rest()
-                r.duration = duration.Duration(remaining)
-                r.addLyric(f"REST: {remaining}")
-                m.append(r)
-                total_beat += remaining
+                # 用 Rest 補滿
+                if remaining > 0:
+                    r = note.Rest()
+                    r.duration = duration.Duration(remaining)
+                    r.addLyric(f"REST: {remaining}")
+                    m.append(r)
+                    total_beat += remaining
+                    total_beat = round(total_beat, 5)
                 break
 
             dur_type, dots, ql = random.choice(valid)
             d = duration.Duration(dur_type)
             d.dots = dots
 
-            # 音高移動邏輯
+            # 決定音高
             if move_style == "step":
                 steps = random.choice([-2, -1, 0, 1, 2])
             else:
@@ -111,6 +117,7 @@ def create_measured_phrase(length=8, time_signature="4/4", move_style="step"):
             current_pitch = pitch.Pitch()
             current_pitch.midi = next_midi
 
+            # 建立 Note，加入資訊型歌詞
             n = note.Note()
             n.pitch = current_pitch
             n.duration = d
@@ -119,6 +126,7 @@ def create_measured_phrase(length=8, time_signature="4/4", move_style="step"):
 
             m.append(n)
             total_beat += d.quarterLength
+            total_beat = round(total_beat, 5)
 
         part.append(m)
 
