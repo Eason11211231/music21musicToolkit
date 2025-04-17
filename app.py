@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from music_utils import analyze_musicxml
-from generate_utils import generate_melody
+from melody_generator import generate_melody
 
 app = Flask(__name__)
 CORS(app)
