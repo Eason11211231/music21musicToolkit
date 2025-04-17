@@ -1,4 +1,4 @@
 Flask
 Flask-Cors
-music21==9.5.0
+music21
 dropbox
