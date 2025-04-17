@@ -38,7 +38,7 @@ bass.append(instrument.Cello())  # ✅ 指定低音為大提琴
 bass.append(k)
 bass.append(ts)
 
-    scale_pitches = k.getPitches()
+scale_pitches = k.getPitches()
 
     for _ in range(measures):
         m1 = stream.Measure()
