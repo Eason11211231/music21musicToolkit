@@ -3,7 +3,11 @@ import dropbox
 import os
 import uuid
 import random
-# 中文 key 譯名轉換函式
+
+DROPBOX_ACCESS_TOKEN = "sl.xxxxx.你的_token"  # TODO: 換掉你的 dropbox token
+dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
+
+# ✅ 中文調性轉換 + 自動大小寫處理
 def key_translate(input_str):
     if not input_str:
         return "C"
@@ -18,30 +22,24 @@ def key_translate(input_str):
     for zh, en in mapping.items():
         input_str = input_str.replace(zh, en)
 
-    return input_str.strip().title()  # 把大小寫處理成標準格式
-
-
-DROPBOX_ACCESS_TOKEN = "sl.xxxxx.你的_token"  # TODO: 請換成你自己的 Dropbox token
-dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
+    return input_str.strip().title()
 
 def generate_melody(style, key_str, time_signature, measures=8, pitch_pool=None):
     score = stream.Score()
 
-translated_key_str = key_translate(key_str)
+    # ✅ 用 key_translate 處理中文調性與大小寫
+    translated_key_str = key_translate(key_str)
+    try:
+        k = m21key.Key(translated_key_str)
+    except Exception as e:
+        print(f"[ERROR] 無法解析 key：'{key_str}'（轉為：'{translated_key_str}'）錯誤：{e}")
+        return {"error": f"無法解析調性：{key_str}"}
 
-try:
-    k = m21key.Key(translated_key_str)
-except Exception as e:
-    print(f"[ERROR] 無法解析 key：'{key_str}'（轉為：'{translated_key_str}'）錯誤：{e}")
-    return {"error": f"無法解析調性：{key_str}"}
-
-    # Time signature 處理
     try:
         ts = meter.TimeSignature(time_signature)
     except:
         ts = meter.TimeSignature("4/4")
 
-    # 建立旋律與低音部
     melody = stream.Part()
     melody.id = "Melody"
     melody.partName = "旋律"
@@ -56,7 +54,7 @@ except Exception as e:
     bass.append(k)
     bass.append(ts)
 
-    # 處理 pitch_pool
+    # pitchPool 清理處理
     if pitch_pool and isinstance(pitch_pool, list):
         cleaned_pitch_pool = []
         for p in pitch_pool:
@@ -112,4 +110,4 @@ except Exception as e:
     public_url = shared_link_metadata.url.replace("?dl=0", "?dl=1")
 
     os.remove(filename)
-    return public_url  # ✅ 確保在函式內，縮排對齊
+    return public_url  # ✅ 這一行正確縮排在函式裡面！
