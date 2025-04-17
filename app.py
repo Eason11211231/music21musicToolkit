@@ -3,8 +3,13 @@ from flask_cors import CORS
 from music_utils import analyze_musicxml
 from melody_generator import generate_melody
 
+import os
+
 app = Flask(__name__)
 CORS(app)
+
+# ✅ 防止中文亂碼（可選）
+app.config['JSON_AS_ASCII'] = False
 
 @app.route("/musicToolkit", methods=["POST"])
 def handleMusicTask():
@@ -22,50 +27,55 @@ def handleMusicTask():
             result = analyze_musicxml(melody)
             return jsonify({
                 "status": "success",
-                "message": "分析成功",
+                "message": "Analysis completed.",
                 "analysisResult": result
             })
         except Exception as e:
             return jsonify({
                 "status": "error",
-                "message": f"音樂分析失敗：{str(e)}"
+                "message": f"Music analysis failed: {str(e)}"
             }), 500
 
     elif task == "generateMelody":
         try:
             musicxml_result = generate_melody(style, key, time_sig, measures, pitch_pool)
 
+            # ✅ 如果是錯誤訊息，回傳 error 狀態
             if isinstance(musicxml_result, dict) and "error" in musicxml_result:
                 return jsonify({
                     "status": "error",
                     "message": musicxml_result["error"]
                 }), 400
 
+            # ✅ 正確情況，回傳 GPT 友善格式
             return jsonify({
                 "status": "success",
-                "message": "旋律生成成功",
+                "message": "Melody generated successfully.",
                 "keyUsed": key,
                 "musicXMLUrl": str(musicxml_result)
             })
+
         except Exception as e:
             return jsonify({
                 "status": "error",
-                "message": f"伺服器錯誤：{str(e)}"
+                "message": f"Internal server error: {str(e)}"
             }), 500
 
     else:
         return jsonify({
             "status": "error",
-            "message": "無效的任務參數（task）"
+            "message": "Invalid task type."
         }), 400
 
+# ✅ 加上根目錄測試（可選）
 @app.route("/")
 def home():
-    return jsonify({"message": "Music Toolkit API is running."})
+    return jsonify({
+        "message": "🎵 Music Toolkit API is running.",
+        "status": "online"
+    })
 
-# ⬇️ 一定要有這段才能讓 render 掃到 port
-import os
-
+# ✅ 啟動 Flask server（Render 用）
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
